@@ -23,14 +23,12 @@ class SimRank:
             q_i = self.users.index(query)
             a_j = self.items.index(ad)
             self.graph[q_i, a_j] += 1
-        print(self.graph)
-        
         self.user_sim = np.array(np.identity(len(self.users)))
         self.item_sim = np.array(np.identity(len(self.items)))
 
-    def load_serials(self, path="../data/20200525"):
+    def load_serials(self, path="data/20200602"):
         with open(path, "r", encoding="utf-8") as f:
-            logs_tuple = [(line.strip("\n").split()[0],line.strip("\n").split()[1:]) for line in f.readlines()]
+            logs_tuple = [(line.strip("\n").split()[0], line.strip("\n").split()[1:]) for line in f.readlines()]
             self.users = list(set([log[0] for log in logs_tuple]))
             click_serials = list([log[1] for log in logs_tuple])
             self.items = list(set([item for serials in click_serials for item in serials]))
@@ -43,6 +41,8 @@ class SimRank:
                     self.graph[u_i, i_j] += 1
             self.user_sim = np.array(np.identity(len(self.users)))
             self.item_sim = np.array(np.identity(len(self.items)))
+            print("user length: ", len(self.users))
+            print("item length: ", len(self.items))
 
     def get_ads_num(self, query):
         q_i = self.users.index(query)
@@ -64,12 +64,6 @@ class SimRank:
         """
         in this, graph[q_i] -> connected ads
         """
-        """
-        print "q1.ads"
-        print get_ads_num(q1).tolist()
-        print "q2.ads"
-        print get_ads_num(q2).tolist()
-        """
         if q1 == q2:
             return 1
         prefix = C / (self.get_ads_num(q1).sum() * self.get_ads_num(q2).sum())
@@ -84,12 +78,6 @@ class SimRank:
     def item_simrank(self, a1, a2, C):
         """
         in this, graph need to be transposed to make ad to be the index
-        """
-        """
-        print "a1.queries"
-        print get_queries_num(a1)
-        print "a2.queries"
-        print get_queries_num(a2)
         """
         if a1 == a2 : return 1
         prefix = C / (self.get_queries_num(a1).sum() * self.get_queries_num(a2).sum())
@@ -122,11 +110,21 @@ class SimRank:
             self.item_sim = new_item_sim
 
 
+def save_data(data, path):
+    if isinstance(data, list):
+        with open(path, "w", encoding="utf-8") as f:
+            for i in data:
+                f.write(i + "\n")
+    elif isinstance(data, np.ndarray):
+        np.savetxt(path, data, delimiter="\t")
+
+
 if __name__ == '__main__':
     simrank = SimRank()
-    simrank.load_data()
-    print(simrank.users)
-    print(simrank.items)
+    simrank.load_serials("data/tmp")
+    print("load finished")
     simrank.simrank()
-    print(simrank.user_sim)
-    print(simrank.item_sim)
+    save_data(simrank.users, "data/users.txt")
+    save_data(simrank.items, "data/items.txt")
+    save_data(simrank.item_sim, "data/item_sim.txt")
+    save_data(simrank.user_sim, "data/user_sim.txt")
